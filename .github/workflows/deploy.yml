@@ -42,7 +42,7 @@ jobs:
       with:
         branch: gh-pages  # The branch where the built files will be deployed
         folder: ./build  # The directory containing the build files (update as necessary)
-        token: ${{ secrets.GITHUB_TOKEN }}
+        token: ${{ secrets.MY_GITHUB_TOKEN }}
 
     # Deploy to staging (for develop branch)
     - name: Deploy to GitHub Pages (Staging)
