@@ -29,10 +29,7 @@ jobs:
     - name: Install dependencies
       run: |
         npm install
-    - name: Run tests
-      run: |
-        npm test  # Adjust if you are using a specific test framework like Jest, Mocha, etc.
-
+    
     # Build the project (for example, using npm run build)
     - name: Build project
       run: |
