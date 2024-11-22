@@ -1,0 +1,65 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+      - develop
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    # Checkout the repository
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    # Set up Node.js (for build tasks)
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '14'
+
+    # Install dependencies and run tests
+    - name: Install dependencies
+      run: |
+        npm install
+    - name: Run tests
+      run: |
+        npm test  # Adjust if you are using a specific test framework like Jest, Mocha, etc.
+
+    # Build the project (for example, using npm run build)
+    - name: Build project
+      run: |
+        npm run build
+
+    # Run Lighthouse CI for performance checks
+    - name: Run Lighthouse CI
+      uses: treosh/lighthouse-ci-action@v1
+      with:
+        urls: https://2blackcow.github.io/movie
+        configPath: './lighthouse-config.js'
+        assert: 'true'
+      
+    # Deploy to GitHub Pages (using GitHub Pages action)
+    - name: Deploy to GitHub Pages
+      if: github.ref == 'refs/heads/main'  # Only deploy on main branch
+      uses: JamesIves/github-pages-deploy-action@v4
+      with:
+        branch: gh-pages  # The branch where the built files will be deployed
+        folder: ./build  # The directory containing the build files (update as necessary)
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+    # Deploy to staging (for develop branch)
+    - name: Deploy to GitHub Pages (Staging)
+      if: github.ref == 'refs/heads/develop'  # Only deploy on develop branch
+      uses: JamesIves/github-pages-deploy-action@v4
+      with:
+        branch: gh-pages  # The branch where the built files will be deployed
+        folder: ./build  # The directory containing the build files (update as necessary)
+        token: ${{ secrets.GITHUB_TOKEN }}
