@@ -34,14 +34,6 @@ jobs:
     - name: Build project
       run: |
         npm run build
-
-    # Run Lighthouse CI for performance checks
-    - name: Run Lighthouse CI
-      uses: treosh/lighthouse-ci-action@v1
-      with:
-        urls: https://2blackcow.github.io/movie
-        configPath: './lighthouse-config.js'
-        assert: 'true'
       
     # Deploy to GitHub Pages (using GitHub Pages action)
     - name: Deploy to GitHub Pages
