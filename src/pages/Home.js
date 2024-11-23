@@ -3,33 +3,38 @@ import Banner from "../components/Banner";
 import { useSelector } from "react-redux";
 import HorizontalScrollCard from "../components/HorizontalScrollCard";
 import useFetch from "../hooks/useFetch";
-import { MOVIE_CATEGORIES } from "../config/api.config";
-import MovieSection from "../components/MovieSection";
+import { MOVIE_CATEGORIES, ENDPOINTS } from "../config/api.config";
 
 const Home = () => {
-  // Banner data는 Redux에서 관리
   const trendingData = useSelector((state) => state.movieData.bannerData) || [];
+  const { data: nowPlayingData, loading: nowPlayingLoading } = useFetch(ENDPOINTS.NOW_PLAYING);
+  const { data: topRatedData, loading: topRatedLoading } = useFetch(ENDPOINTS.TOP_RATED);
 
   return (
     <div className="w-full">
       <Banner />
       <div className="container mx-auto px-4 space-y-8">
-        {/* 트렌딩 영화 섹션 */}
+        {/* 대세 콘텐츠 섹션 */}
         <HorizontalScrollCard 
           data={trendingData} 
           heading={MOVIE_CATEGORIES.trending.title}
         />
         
-        {/* 다른 카테고리들 */}
-        {Object.entries(MOVIE_CATEGORIES)
-          .filter(([key]) => key !== 'trending') // trending은 이미 위에서 표시
-          .map(([key, category]) => (
-            <MovieSection 
-              key={key}
-              endpoint={category.endpoint}
-              title={category.title}
-            />
-          ))}
+        {/* 현재 상영작 섹션 */}
+        {!nowPlayingLoading && (
+          <HorizontalScrollCard 
+            data={nowPlayingData} 
+            heading={MOVIE_CATEGORIES.nowPlaying.title}
+          />
+        )}
+
+        {/* 최고 평점 섹션 */}
+        {!topRatedLoading && (
+          <HorizontalScrollCard 
+            data={topRatedData} 
+            heading={MOVIE_CATEGORIES.topRated.title}
+          />
+        )}
       </div>
     </div>
   );

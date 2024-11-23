@@ -6,16 +6,14 @@ export const API_CONFIG = {
   };
   
   export const ENDPOINTS = {
-    TRENDING: '/trending/all/week',
-    NOW_PLAYING: '/movie/now_playing',
-    TOP_RATED: '/movie/top_rated',
-    POPULAR: '/movie/popular',
-    LATEST: '/movie/upcoming', // 최신 영화는 upcoming API를 사용
+    TRENDING: '/trending/all/week',  // 대세 콘텐츠
+    NOW_PLAYING: '/movie/now_playing', // 현재 상영작
+    TOP_RATED: '/movie/top_rated',   // 최고 평점
   };
   
   export const MOVIE_CATEGORIES = {
     trending: {
-      title: "인기 영화",
+      title: "대세 콘텐츠",
       endpoint: ENDPOINTS.TRENDING
     },
     nowPlaying: {
@@ -25,13 +23,5 @@ export const API_CONFIG = {
     topRated: {
       title: "최고 평점",
       endpoint: ENDPOINTS.TOP_RATED
-    },
-    popular: {
-      title: "인기 상영작",
-      endpoint: ENDPOINTS.POPULAR
-    },
-    latest: {
-      title: "최신 영화",
-      endpoint: ENDPOINTS.LATEST
     }
   };
