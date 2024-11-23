@@ -1,41 +1,29 @@
 import { Outlet } from 'react-router-dom';
 import './App.css';
 import Header from './components/Header';
-import Footer from './components/Footer';
 import MobileNavigation from './components/MobileNavigation';
 import { useEffect } from 'react';
-import axios from 'axios';
 import { setBannerDtata, setImageURL } from './store/movieSlice';
 import { useDispatch } from 'react-redux';
+import useFetch from './hooks/useFetch';
+import { ENDPOINTS } from './config/api.config';
 
 function App() {
-  const dispatch = useDispatch()
-  const fetchTrendingData = async()=>{
-    try{
-      const response = await axios.get(
-        `https://api.themoviedb.org/3/trending/all/week?api_key=${process.env.REACT_APP_API_KEY}&language=ko-KR`)
+  const dispatch = useDispatch();
+  const { data: trendingData } = useFetch(ENDPOINTS.TRENDING);
+  const { data: configData } = useFetch(ENDPOINTS.CONFIGURATION);
 
-        dispatch(setBannerDtata(response.data.results))
-  
-    } catch(error){
-      console.log("error", error)
+  useEffect(() => {
+    if (trendingData.length > 0) {
+      dispatch(setBannerDtata(trendingData));
     }
-  }
+  }, [trendingData, dispatch]);
 
-  const fetchConfiguration = async()=>{
-    try{
-      const response = await axios.get(`https://api.themoviedb.org/3/configuration?api_key=${process.env.REACT_APP_API_KEY}`)
-      dispatch(setImageURL( response.data.images.secure_base_url + "original"))
-
-    } catch (error){
-
+  useEffect(() => {
+    if (configData?.images?.secure_base_url) {
+      dispatch(setImageURL(configData.images.secure_base_url + "original"));
     }
-  }
-
-  useEffect(()=>{
-    fetchTrendingData()
-    fetchConfiguration()
-  },[])
+  }, [configData, dispatch]);
 
   return (
     <main className='pb-14 lg:pb-0'>
@@ -43,7 +31,6 @@ function App() {
       <div className="">
         <Outlet/>
       </div>
-      <Footer/>
       <MobileNavigation/>
     </main>
   );

@@ -4,9 +4,11 @@ import { GoTriangleLeft, GoTriangleRight } from "react-icons/go";
 
 const Banner = () => {
   const bannerData = useSelector((state) => state.movieData.bannerData) || [];
-  const imageURL = useSelector((state) => state.movieData.imageURL);
   const [currentIndex, setCurrentIndex] = useState(1);
   const [isAnimating, setIsAnimating] = useState(false);
+
+  // TMDB 이미지 기본 URL 직접 설정
+  const IMAGE_BASE_URL = "https://image.tmdb.org/t/p/original";
 
   // 무한 슬라이드를 위해 앞뒤로 슬라이드 추가
   const extendedBannerData = bannerData.length > 0 ? [
@@ -87,9 +89,13 @@ const Banner = () => {
             <div className="w-full h-full">
               {data?.backdrop_path ? (
                 <img
-                  src={imageURL + data.backdrop_path}
+                  src={`${IMAGE_BASE_URL}${data.backdrop_path}`}
                   alt={data?.title || data?.name || "Movie Banner"}
                   className="h-full w-full object-cover"
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = '/placeholder-image.jpg'; // 대체 이미지 경로
+                  }}
                 />
               ) : (
                 <div className="w-full h-full bg-neutral-900" />
@@ -121,14 +127,14 @@ const Banner = () => {
                 <h2 className="font-bold text-2xl lg:text-4xl text-white drop-shadow-2xl">
                   {data?.title || data?.name || "Loading..."}
                 </h2>
-                <p className="text-ellipsis line-clamp-4 my-2">
+                <p className="text-ellipsis line-clamp-4 my-2 text-white">
                   {data?.overview || ""}
                 </p>
 
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-4 text-white">
                   <p>평점 : {Number(data?.vote_average || 0).toFixed(1)} ⭐</p>
                 </div>
-                <button className="bg-transparent bg-red-600 px-4 py-2 text-white font-bold rounded mt-4 hover:bg-gradient-to-bl transition-all hover:scale-105">
+                <button className="bg-red-700 px-4 py-2 text-white font-bold rounded mt-4 hover:bg-red-800 transition-all hover:scale-105">
                   Play Now
                 </button>
               </div>
