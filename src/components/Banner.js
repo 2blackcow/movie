@@ -3,17 +3,17 @@ import { useSelector } from "react-redux";
 import { GoTriangleLeft, GoTriangleRight } from "react-icons/go";
 
 const Banner = () => {
-  const bannerData = useSelector((state) => state.movieData.bannerData);
+  const bannerData = useSelector((state) => state.movieData.bannerData) || [];
   const imageURL = useSelector((state) => state.movieData.imageURL);
-  const [currentIndex, setCurrentIndex] = useState(1); // 시작 인덱스를 1로 설정
+  const [currentIndex, setCurrentIndex] = useState(1);
   const [isAnimating, setIsAnimating] = useState(false);
 
   // 무한 슬라이드를 위해 앞뒤로 슬라이드 추가
-  const extendedBannerData = [
-    bannerData[bannerData.length - 1], // 마지막 슬라이드를 맨 앞에 추가
+  const extendedBannerData = bannerData.length > 0 ? [
+    bannerData[bannerData.length - 1],
     ...bannerData,
-    bannerData[0], // 첫 번째 슬라이드를 맨 뒤에 추가
-  ];
+    bannerData[0],
+  ] : [];
 
   useEffect(() => {
     if (isAnimating) {
@@ -26,46 +26,58 @@ const Banner = () => {
 
   // 슬라이드 위치 재조정
   useEffect(() => {
-    if (!isAnimating) {
-      if (currentIndex === 0) { // 처음으로 갔을 때
+    if (!isAnimating && bannerData.length > 0) {
+      if (currentIndex === 0) {
         const timer = setTimeout(() => {
           setCurrentIndex(bannerData.length);
         }, 300);
         return () => clearTimeout(timer);
       }
-      if (currentIndex === bannerData.length + 1) { // 마지막으로 갔을 때
+      if (currentIndex === bannerData.length + 1) {
         const timer = setTimeout(() => {
           setCurrentIndex(1);
         }, 300);
         return () => clearTimeout(timer);
       }
     }
-  }, [currentIndex, isAnimating]);
+  }, [currentIndex, isAnimating, bannerData.length]);
+
+  // 자동 슬라이드
+  useEffect(() => {
+    if (bannerData.length > 0) {
+      const interval = setInterval(() => {
+        if (!isAnimating) {
+          setIsAnimating(true);
+          setCurrentIndex(prev => prev + 1);
+        }
+      }, 5000);
+      return () => clearInterval(interval);
+    }
+  }, [bannerData.length, isAnimating]);
 
   const handleNext = () => {
-    if (isAnimating) return;
+    if (isAnimating || !bannerData.length) return;
     setIsAnimating(true);
     setCurrentIndex(prev => prev + 1);
   };
 
   const handlePrevious = () => {
-    if (isAnimating) return;
+    if (isAnimating || !bannerData.length) return;
     setIsAnimating(true);
     setCurrentIndex(prev => prev - 1);
   };
 
-  // 자동 슬라이드
-  useEffect(() => {
-    const interval = setInterval(handleNext, 5000);
-    return () => clearInterval(interval);
-  }, []);
+  // 데이터가 없을 때의 로딩 상태
+  if (!bannerData.length) {
+    return <div className="w-full h-[450px] bg-neutral-900 animate-pulse" />;
+  }
 
   return (
     <section className="w-full h-full relative overflow-hidden">
       <div className="flex min-h-full max-h-[95vh]">
         {extendedBannerData.map((data, index) => (
           <div
-            key={`${data.id}-${index}`}
+            key={`${data?.id || index}-${index}`}
             className="min-w-full min-h-[450px] lg:min-h-full relative group"
             style={{
               transform: `translateX(-${currentIndex * 100}%)`,
@@ -73,11 +85,15 @@ const Banner = () => {
             }}
           >
             <div className="w-full h-full">
-              <img
-                src={imageURL + data.backdrop_path}
-                alt={data.title || data.name}
-                className="h-full w-full object-cover"
-              />
+              {data?.backdrop_path ? (
+                <img
+                  src={imageURL + data.backdrop_path}
+                  alt={data?.title || data?.name || "Movie Banner"}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full bg-neutral-900" />
+              )}
             </div>
 
             {/* 이전/다음 버튼 */}
@@ -103,12 +119,14 @@ const Banner = () => {
             <div className="container mx-auto">
               <div className="container mx-auto absolute bottom-0 max-w-md px-4">
                 <h2 className="font-bold text-2xl lg:text-4xl text-white drop-shadow-2xl">
-                  {data.title || data.name}
+                  {data?.title || data?.name || "Loading..."}
                 </h2>
-                <p className="text-ellipsis line-clamp-4 my-2">{data.overview}</p>
+                <p className="text-ellipsis line-clamp-4 my-2">
+                  {data?.overview || ""}
+                </p>
 
                 <div className="flex items-center gap-4">
-                  <p>평점 : {Number(data.vote_average).toFixed(1)} ⭐</p>
+                  <p>평점 : {Number(data?.vote_average || 0).toFixed(1)} ⭐</p>
                 </div>
                 <button className="bg-transparent bg-red-600 px-4 py-2 text-white font-bold rounded mt-4 hover:bg-gradient-to-bl transition-all hover:scale-105">
                   Play Now
@@ -119,7 +137,6 @@ const Banner = () => {
         ))}
       </div>
 
-      {/* 인디케이터 */}
       <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2">
         {bannerData.map((_, index) => (
           <button
