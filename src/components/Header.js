@@ -49,7 +49,7 @@ const Header = () => {
         <form className="flex items-center gap-2" onSubmit={handleSubmit}>
           <input
             type="text"
-            placeholder="Search here..."
+            placeholder="영화 제목을 입력하세요..."
             className="bg-transparent text-white border-b border-white focus:outline-none px-2 py-1 w-44 sm:w-64"
             onChange={(e)=>setSearchInput(e.target.value)}
             value={searchInput}

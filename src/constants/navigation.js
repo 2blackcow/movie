@@ -1,5 +1,5 @@
 import { IoHome } from "react-icons/io5";
-import { MdOutlineSearch, MdLocalFireDepartment, MdFavorite } from "react-icons/md";
+import { MdOutlineSearch, MdLocalFireDepartment, MdFavorite, MdSearch } from "react-icons/md";
 
 // 헤더에 표시될 메인 네비게이션
 export const navigation = [
@@ -17,6 +17,12 @@ export const navigation = [
     label: "찜한 리스트",
     href: "/my-list",
     icon: <MdFavorite size={20} />
+  },
+
+  {
+    label: "찾아보기",
+    href: "/browse",
+    icon: <MdSearch size={20} />
   }
 ];
 
