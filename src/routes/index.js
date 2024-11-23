@@ -1,9 +1,9 @@
 import { createBrowserRouter } from "react-router-dom";
 import App from "../App";
 import Home from "../pages/Home"
-import ExplorePage from "../pages/ExplorePage";
 import DetailsPage from "../pages/DetailsPage";
 import SearchPage from "../pages/SearchPage";
+import MyList from "../pages/MyList";
 
 const router = createBrowserRouter([
     {
@@ -15,8 +15,8 @@ const router = createBrowserRouter([
                 element : <Home/>
             },
             {
-                path : ":explore",
-                element : <ExplorePage/>
+                path: '/my-list',
+                element: <MyList />
             },
             {
                 path : ":explore/:id",
