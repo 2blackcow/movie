@@ -1,93 +1,48 @@
-import React, { useRef, useState, useEffect } from "react";
+import React, { useRef } from "react";
 import Card from "./Card";
 import { GoTriangleLeft, GoTriangleRight } from "react-icons/go";
 
 const HorizontalScrollCard = ({ data = [], heading }) => {
   const containerRef = useRef();
-  const [isHovering, setIsHovering] = useState(false);
 
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
+  const handleWheel = (event) => {
+    if (!containerRef.current || !event) return;
+    
+    event.preventDefault();
+    containerRef.current.scrollLeft += event.deltaY;
+  };
 
-    const handleWheel = (event) => {
-      // 마우스가 영역 안에 있을 때만 스크롤 처리
-      if (!isHovering) return;
-
-      // 무조건 기본 스크롤 동작을 막음
-      event.preventDefault();
-
-      // 가로 스크롤이 가능한 상태인지 확인
-      const canScrollLeft = container.scrollLeft > 0;
-      const canScrollRight = 
-        container.scrollLeft < container.scrollWidth - container.clientWidth;
-
-      // deltaMode가 0이면 픽셀 단위, 1이면 라인 단위
-      const scrollMultiplier = event.deltaMode === 1 ? 40 : 1;
-      const scrollAmount = event.deltaY * scrollMultiplier;
-
-      // 스크롤 방향에 따라 조건 체크하여 스크롤
-      if ((scrollAmount > 0 && canScrollRight) || (scrollAmount < 0 && canScrollLeft)) {
-        container.scrollBy({
-          left: scrollAmount,
-          behavior: 'smooth'
-        });
-      }
-    };
-
-    // 이벤트 리스너 등록 시 { passive: false } 옵션 추가
-    container.addEventListener('wheel', handleWheel, { passive: false });
-
-    // 컴포넌트 언마운트 시 이벤트 리스너 제거
-    return () => {
-      container.removeEventListener('wheel', handleWheel);
-    };
-  }, [isHovering]); // isHovering이 변경될 때마다 이벤트 리스너 재설정
-
-  const handleNext = () => {
-    const container = containerRef.current;
-    if (!container) return;
-
-    container.scrollBy({
-      left: container.clientWidth / 2,
+  const scroll = (direction) => {
+    if (!containerRef.current) return;
+    
+    const scrollAmount = 300;
+    containerRef.current.scrollBy({
+      left: direction === 'left' ? -scrollAmount : scrollAmount,
       behavior: 'smooth'
     });
   };
 
-  const handlePrevious = () => {
-    const container = containerRef.current;
-    if (!container) return;
-
-    container.scrollBy({
-      left: -(container.clientWidth / 2),
-      behavior: 'smooth'
-    });
-  };
-
-  if (!Array.isArray(data)) {
-    return <div>데이터를 불러오는 중...</div>;
+  // 데이터가 없거나 로딩 중일 때 처리
+  if (!data || data.length === 0) {
+    return null;
   }
 
   return (
     <div className="my-8">
-      <h2 className="text-2xl font-bold mb-4">{heading}</h2>
-
-      <div 
-        className="relative group"
-        onMouseEnter={() => setIsHovering(true)}
-        onMouseLeave={() => setIsHovering(false)}
-      >
-        {/* Scrollable container */}
+      <h2 className="text-2xl font-bold mb-4 text-white">{heading}</h2>
+      
+      <div className="relative group">
+        {/* 스크롤 가능한 컨테이너 */}
         <div
           ref={containerRef}
-          className="flex overflow-x-auto gap-4 pb-4 relative scroll-smooth transition-all scrollbar-none"
+          className="flex overflow-x-auto gap-4 pb-4 scrollbar-none"
+          onWheel={handleWheel}
           style={{
             scrollbarWidth: 'none',
             msOverflowStyle: 'none',
-            WebkitOverflowScrolling: 'touch',
+            WebkitOverflowScrolling: 'touch'
           }}
         >
-          {/* Render cards */}
           {data.map((item) => (
             <div 
               key={item.id} 
@@ -98,23 +53,19 @@ const HorizontalScrollCard = ({ data = [], heading }) => {
           ))}
         </div>
 
-        {/* Navigation buttons - 스크롤 가능할 때만 표시 */}
-        {data.length > 0 && (
-          <div className="absolute top-0 flex justify-between w-full h-full items-center pointer-events-none">
-            <button
-              onClick={handlePrevious}
-              className="bg-white/90 p-2 text-red-500 rounded-full -ml-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-auto hover:bg-white"
-            >
-              <GoTriangleLeft size={20} />
-            </button>
-            <button
-              onClick={handleNext}
-              className="bg-white/90 p-2 text-red-500 rounded-full -mr-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-auto hover:bg-white"
-            >
-              <GoTriangleRight size={20} />
-            </button>
-          </div>
-        )}
+        {/* 스크롤 버튼 */}
+        <button
+          onClick={() => scroll('left')}
+          className="absolute left-0 top-1/2 -translate-y-1/2 bg-black/50 p-2 rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity"
+        >
+          <GoTriangleLeft size={20} />
+        </button>
+        <button
+          onClick={() => scroll('right')}
+          className="absolute right-0 top-1/2 -translate-y-1/2 bg-black/50 p-2 rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity"
+        >
+          <GoTriangleRight size={20} />
+        </button>
       </div>
     </div>
   );
