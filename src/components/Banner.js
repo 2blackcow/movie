@@ -128,7 +128,7 @@ const Banner = () => {
                 <div className="flex items-center gap-4">
                   <p>평점 : {Number(data?.vote_average || 0).toFixed(1)} ⭐</p>
                 </div>
-                <button className="bg-transparent bg-red-600 px-4 py-2 text-white font-bold rounded mt-4 hover:bg-gradient-to-bl transition-all hover:scale-105">
+                <button className="bg-transparent bg-red-700 px-4 py-2 text-white font-bold rounded mt-4 hover:bg-gradient-to-bl transition-all hover:scale-105">
                   Play Now
                 </button>
               </div>
