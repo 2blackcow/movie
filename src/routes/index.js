@@ -5,6 +5,7 @@ import DetailsPage from "../pages/DetailsPage";
 import SearchPage from "../pages/SearchPage";
 import MyList from "../pages/MyList";
 import Browse from "../pages/Browse"; // Browse 컴포넌트 import 추가
+import Popular from "../pages/Popular";
 
 const router = createBrowserRouter([
     {
@@ -16,12 +17,16 @@ const router = createBrowserRouter([
                 element : <Home/>
             },
             {
-                path: 'my-list',
+                path: 'popular',
+                element: <Popular />
+            },
+            {
+                path: 'wishlist',
                 element: <MyList />
             },
             {
                 path: 'browse',
-                element: <Browse />
+                element: <Browse/>
             },
             {
                 path : ":explore/:id",

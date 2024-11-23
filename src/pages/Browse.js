@@ -1,13 +1,13 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import ScrollToTop from '../components/ScrollToTop';
-import { 
-  MdFilterList, 
-  MdRefresh, 
-  MdChevronLeft, 
-  MdChevronRight 
-} from 'react-icons/md';
-import Card from '../components/Card';
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import ScrollToTop from "../components/ScrollToTop";
+import {
+  MdFilterList,
+  MdRefresh,
+  MdChevronLeft,
+  MdChevronRight,
+} from "react-icons/md";
+import Card from "../components/Card";
 
 const GENRES = {
   28: "액션",
@@ -28,24 +28,24 @@ const GENRES = {
   10770: "TV 영화",
   53: "스릴러",
   10752: "전쟁",
-  37: "서부"
+  37: "서부",
 };
 
 const RATING_RANGES = [
-  { label: '9점 이상', min: 9, max: 10 },
-  { label: '8-9점', min: 8, max: 8.9 },
-  { label: '7-8점', min: 7, max: 7.9 },
-  { label: '6-7점', min: 6, max: 6.9 },
-  { label: '5-6점', min: 5, max: 5.9 },
-  { label: '4-5점', min: 4, max: 4.9 },
-  { label: '4점 이하', min: 0, max: 3.9 }
+  { label: "9점 이상", min: 9, max: 10 },
+  { label: "8-9점", min: 8, max: 8.9 },
+  { label: "7-8점", min: 7, max: 7.9 },
+  { label: "6-7점", min: 6, max: 6.9 },
+  { label: "5-6점", min: 5, max: 5.9 },
+  { label: "4-5점", min: 4, max: 4.9 },
+  { label: "4점 이하", min: 0, max: 3.9 },
 ];
 
 const SORT_OPTIONS = [
-  { value: 'vote_average.desc', label: '평점 높은순' },
-  { value: 'vote_average.asc', label: '평점 낮은순' },
-  { value: 'release_date.desc', label: '최신순' },
-  { value: 'release_date.asc', label: '오래된순' }
+  { value: "vote_average.desc", label: "평점 높은순" },
+  { value: "vote_average.asc", label: "평점 낮은순" },
+  { value: "release_date.desc", label: "최신순" },
+  { value: "release_date.asc", label: "오래된순" },
 ];
 
 const Browse = () => {
@@ -54,11 +54,11 @@ const Browse = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
   const [filters, setFilters] = useState({
-    with_genres: '',
-    vote_average_gte: '',
-    vote_average_lte: '',
-    primary_release_year: '',
-    sort_by: 'popularity.desc'
+    with_genres: "",
+    vote_average_gte: "",
+    vote_average_lte: "",
+    primary_release_year: "",
+    sort_by: "popularity.desc",
   });
 
   const fetchMovies = async (page = 1) => {
@@ -66,11 +66,11 @@ const Browse = () => {
     try {
       const params = {
         api_key: process.env.REACT_APP_API_KEY,
-        language: 'ko-KR',
+        language: "ko-KR",
         page,
         sort_by: filters.sort_by,
-        'vote_count.gte': 50,
-        'release_date.lte': new Date().toISOString().split('T')[0],
+        "vote_count.gte": 50,
+        "release_date.lte": new Date().toISOString().split("T")[0],
       };
 
       if (filters.with_genres) {
@@ -82,27 +82,28 @@ const Browse = () => {
       }
 
       if (filters.vote_average_gte && filters.vote_average_lte) {
-        params['vote_average.gte'] = filters.vote_average_gte;
-        params['vote_average.lte'] = filters.vote_average_lte;
+        params["vote_average.gte"] = filters.vote_average_gte;
+        params["vote_average.lte"] = filters.vote_average_lte;
       }
 
       const response = await axios.get(
-        'https://api.themoviedb.org/3/discover/movie',
+        "https://api.themoviedb.org/3/discover/movie",
         { params }
       );
 
-      let filteredMovies = response.data.results.filter(movie => 
-        movie && 
-        movie.poster_path && 
-        movie.vote_average >= Number(filters.vote_average_gte || 0) &&
-        movie.vote_average <= Number(filters.vote_average_lte || 10)
+      let filteredMovies = response.data.results.filter(
+        (movie) =>
+          movie &&
+          movie.poster_path &&
+          movie.vote_average >= Number(filters.vote_average_gte || 0) &&
+          movie.vote_average <= Number(filters.vote_average_lte || 10)
       );
 
       setMovies(filteredMovies);
       setTotalPages(Math.min(response.data.total_pages, 500));
       setCurrentPage(page);
     } catch (error) {
-      console.error('Error fetching movies:', error);
+      console.error("Error fetching movies:", error);
     }
     setLoading(false);
   };
@@ -111,28 +112,77 @@ const Browse = () => {
     fetchMovies(currentPage);
   }, [currentPage, filters]);
 
+  const renderPageNumbers = () => {
+    const pageNumbers = [];
+    const totalPagesToShow = 5;
+
+    // 전체 페이지가 5페이지 이하인 경우
+    if (totalPages <= totalPagesToShow) {
+      for (let i = 1; i <= totalPages; i++) {
+        pageNumbers.push(
+          <button
+            key={i}
+            onClick={() => setCurrentPage(i)}
+            className={`w-10 h-10 rounded-full flex items-center justify-center
+              ${
+                currentPage === i
+                  ? "bg-red-600 text-white"
+                  : "bg-gray-700 text-white hover:bg-gray-600"
+              }`}
+          >
+            {i}
+          </button>
+        );
+      }
+    } else {
+      // 현재 페이지가 속한 그룹 계산
+      const currentGroup = Math.ceil(currentPage / totalPagesToShow);
+      const startPage = (currentGroup - 1) * totalPagesToShow + 1;
+      const endPage = Math.min(startPage + totalPagesToShow - 1, totalPages);
+
+      // 페이지 번호 버튼들
+      for (let i = startPage; i <= endPage; i++) {
+        pageNumbers.push(
+          <button
+            key={i}
+            onClick={() => setCurrentPage(i)}
+            className={`w-10 h-10 rounded-full flex items-center justify-center
+              ${
+                currentPage === i
+                  ? "bg-red-600 text-white"
+                  : "bg-gray-700 text-white hover:bg-gray-600"
+              }`}
+          >
+            {i}
+          </button>
+        );
+      }
+    }
+
+    return pageNumbers;
+  };
   const handleFilterChange = (name, value) => {
-    setFilters(prev => ({ ...prev, [name]: value }));
+    setFilters((prev) => ({ ...prev, [name]: value }));
     setCurrentPage(1);
   };
 
   const handleRatingChange = (range) => {
     if (range) {
-      const selectedRange = RATING_RANGES.find(r => 
-        `${r.min}-${r.max}` === range
+      const selectedRange = RATING_RANGES.find(
+        (r) => `${r.min}-${r.max}` === range
       );
       if (selectedRange) {
-        setFilters(prev => ({
+        setFilters((prev) => ({
           ...prev,
           vote_average_gte: selectedRange.min,
-          vote_average_lte: selectedRange.max
+          vote_average_lte: selectedRange.max,
         }));
       }
     } else {
-      setFilters(prev => ({
+      setFilters((prev) => ({
         ...prev,
-        vote_average_gte: '',
-        vote_average_lte: ''
+        vote_average_gte: "",
+        vote_average_lte: "",
       }));
     }
     setCurrentPage(1);
@@ -140,11 +190,11 @@ const Browse = () => {
 
   const resetFilters = () => {
     setFilters({
-      with_genres: '',
-      vote_average_gte: '',
-      vote_average_lte: '',
-      primary_release_year: '',
-      sort_by: 'popularity.desc'
+      with_genres: "",
+      vote_average_gte: "",
+      vote_average_lte: "",
+      primary_release_year: "",
+      sort_by: "popularity.desc",
     });
     setCurrentPage(1);
   };
@@ -172,12 +222,16 @@ const Browse = () => {
               <label className="block text-sm font-medium mb-2">장르</label>
               <select
                 value={filters.with_genres}
-                onChange={(e) => handleFilterChange('with_genres', e.target.value)}
+                onChange={(e) =>
+                  handleFilterChange("with_genres", e.target.value)
+                }
                 className="w-full bg-gray-700 rounded-lg p-2 focus:ring-2 focus:ring-red-500"
               >
                 <option value="">전체 장르</option>
                 {Object.entries(GENRES).map(([id, name]) => (
-                  <option key={id} value={id}>{name}</option>
+                  <option key={id} value={id}>
+                    {name}
+                  </option>
                 ))}
               </select>
             </div>
@@ -186,9 +240,11 @@ const Browse = () => {
             <div>
               <label className="block text-sm font-medium mb-2">평점</label>
               <select
-                value={filters.vote_average_gte && filters.vote_average_lte 
-                  ? `${filters.vote_average_gte}-${filters.vote_average_lte}`
-                  : ''}
+                value={
+                  filters.vote_average_gte && filters.vote_average_lte
+                    ? `${filters.vote_average_gte}-${filters.vote_average_lte}`
+                    : ""
+                }
                 onChange={(e) => handleRatingChange(e.target.value)}
                 className="w-full bg-gray-700 rounded-lg p-2 focus:ring-2 focus:ring-red-500"
               >
@@ -206,12 +262,19 @@ const Browse = () => {
               <label className="block text-sm font-medium mb-2">개봉년도</label>
               <select
                 value={filters.primary_release_year}
-                onChange={(e) => handleFilterChange('primary_release_year', e.target.value)}
+                onChange={(e) =>
+                  handleFilterChange("primary_release_year", e.target.value)
+                }
                 className="w-full bg-gray-700 rounded-lg p-2 focus:ring-2 focus:ring-red-500"
               >
                 <option value="">전체 년도</option>
-                {Array.from({ length: 50 }, (_, i) => new Date().getFullYear() - i).map(year => (
-                  <option key={year} value={year}>{year}년</option>
+                {Array.from(
+                  { length: 50 },
+                  (_, i) => new Date().getFullYear() - i
+                ).map((year) => (
+                  <option key={year} value={year}>
+                    {year}년
+                  </option>
                 ))}
               </select>
             </div>
@@ -221,10 +284,10 @@ const Browse = () => {
               <label className="block text-sm font-medium mb-2">정렬</label>
               <select
                 value={filters.sort_by}
-                onChange={(e) => handleFilterChange('sort_by', e.target.value)}
+                onChange={(e) => handleFilterChange("sort_by", e.target.value)}
                 className="w-full bg-gray-700 rounded-lg p-2 focus:ring-2 focus:ring-red-500"
               >
-                {SORT_OPTIONS.map(option => (
+                {SORT_OPTIONS.map((option) => (
                   <option key={option.value} value={option.value}>
                     {option.label}
                   </option>
@@ -252,11 +315,8 @@ const Browse = () => {
             </div>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-              {movies.map(movie => (
-                <Card
-                  key={movie.id}
-                  data={movie}
-                />
+              {movies.map((movie) => (
+                <Card key={movie.id} data={movie} />
               ))}
             </div>
           )}
@@ -266,47 +326,31 @@ const Browse = () => {
         {movies.length > 0 && (
           <div className="flex items-center justify-center gap-4 mt-8 mb-12">
             <button
-              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
               disabled={currentPage === 1}
               className={`flex items-center justify-center w-10 h-10 rounded-full
-                ${currentPage === 1 
-                  ? 'bg-gray-700 text-gray-500 cursor-not-allowed' 
-                  : 'bg-red-600 text-white hover:bg-red-700'
-                }`}
+        ${
+          currentPage === 1
+            ? "bg-gray-700 text-gray-500 cursor-not-allowed"
+            : "bg-red-600 text-white hover:bg-red-700"
+        }`}
             >
               <MdChevronLeft size={24} />
             </button>
 
-            <div className="flex items-center gap-2">
-              {[...Array(5)].map((_, idx) => {
-                const pageNum = currentPage - 2 + idx;
-                if (pageNum > 0 && pageNum <= totalPages) {
-                  return (
-                    <button
-                      key={pageNum}
-                      onClick={() => setCurrentPage(pageNum)}
-                      className={`w-10 h-10 rounded-full flex items-center justify-center
-                        ${currentPage === pageNum 
-                          ? 'bg-red-600 text-white' 
-                          : 'bg-gray-700 text-white hover:bg-gray-600'
-                        }`}
-                    >
-                      {pageNum}
-                    </button>
-                  );
-                }
-                return null;
-              })}
-            </div>
+            <div className="flex items-center gap-2">{renderPageNumbers()}</div>
 
             <button
-              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+              onClick={() =>
+                setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+              }
               disabled={currentPage === totalPages}
               className={`flex items-center justify-center w-10 h-10 rounded-full
-                ${currentPage === totalPages 
-                  ? 'bg-gray-700 text-gray-500 cursor-not-allowed' 
-                  : 'bg-red-600 text-white hover:bg-red-700'
-                }`}
+        ${
+          currentPage === totalPages
+            ? "bg-gray-700 text-gray-500 cursor-not-allowed"
+            : "bg-red-600 text-white hover:bg-red-700"
+        }`}
             >
               <MdChevronRight size={24} />
             </button>
