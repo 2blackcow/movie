@@ -1,9 +1,11 @@
 import { createBrowserRouter } from "react-router-dom";
 import App from "../App";
 import Home from "../pages/Home"
-import ExplorePage from "../pages/ExplorePage";
-import DetailsPage from "../pages/DetailsPage";
 import SearchPage from "../pages/SearchPage";
+import MyList from "../pages/MyList";
+import Browse from "../pages/Browse"; // Browse 컴포넌트 import 추가
+import Popular from "../pages/Popular";
+import MovieDetail from "../pages/MovieDetail";
 
 const router = createBrowserRouter([
     {
@@ -15,12 +17,20 @@ const router = createBrowserRouter([
                 element : <Home/>
             },
             {
-                path : ":explore",
-                element : <ExplorePage/>
+                path: 'popular',
+                element: <Popular />
             },
             {
-                path : ":explore/:id",
-                element : <DetailsPage/>
+                path: 'wishlist',
+                element: <MyList />
+            },
+            {
+                path: 'browse',
+                element: <Browse/>
+            },
+            {
+                path : "movie/:id",
+                element : <MovieDetail/>
             },
             {
                 path : "search",
@@ -29,8 +39,6 @@ const router = createBrowserRouter([
         ]
         
     }
-])
+]);
 
-
-
-export default router
+export default router;
