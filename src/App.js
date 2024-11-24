@@ -6,7 +6,7 @@ import { useEffect } from 'react';
 import { setBannerDtata, setImageURL } from './store/movieSlice';
 import { useDispatch } from 'react-redux';
 import useFetch from './hooks/useFetch';
-import { ENDPOINTS } from './config/api.config';
+import { ENDPOINTS } from './constants/api.config';
 
 function App() {
   const dispatch = useDispatch();

@@ -1,17 +1,35 @@
 import React, { useState, useEffect } from "react";
-import { useSelector } from "react-redux";
 import { GoTriangleLeft, GoTriangleRight } from "react-icons/go";
-import axios from "axios";
-import Modal from "./Modal"; // 새로 만들 Modal 컴포넌트
+import Modal from "./Modal";
+import { fetchFromApi, createImageUrl, ENDPOINTS } from "../constants/api.config";
+import LoadingSpinner from "./LoadingSpinner";
 
 const Banner = () => {
-  const bannerData = useSelector((state) => state.movieData.bannerData) || [];
+  const [bannerData, setBannerData] = useState([]);
   const [filteredBannerData, setFilteredBannerData] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(1);
   const [isAnimating, setIsAnimating] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [trailer, setTrailer] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Banner 데이터 가져오기
+  useEffect(() => {
+    const fetchBannerData = async () => {
+      try {
+        const data = await fetchFromApi(ENDPOINTS.TRENDING);
+        setBannerData(data.results || []);
+      } catch (error) {
+        setError(error.message);
+        console.error('Banner data fetch error:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchBannerData();
+  }, []);
 
   // 설명이 있는 영화만 필터링
   useEffect(() => {
@@ -19,33 +37,28 @@ const Banner = () => {
       movie.overview && movie.overview.trim() !== ""
     );
     setFilteredBannerData(filtered);
-    setCurrentIndex(1); // 필터링 후 인덱스 리셋
+    setCurrentIndex(1);
   }, [bannerData]);
-
-  // 무한 슬라이드를 위해 앞뒤로 슬라이드 추가
-  const extendedBannerData = filteredBannerData.length > 0 ? [
-    filteredBannerData[filteredBannerData.length - 1],
-    ...filteredBannerData,
-    filteredBannerData[0],
-  ] : [];
 
   // 예고편 가져오기
   const fetchTrailer = async (movieId) => {
     setLoading(true);
     try {
-      const response = await axios.get(
-        `https://api.themoviedb.org/3/movie/${movieId}/videos?api_key=${process.env.REACT_APP_API_KEY}&language=ko-KR`
-      );
+      const data = await fetchFromApi(`/movie/${movieId}/videos`);
       
       // 예고편 찾기 (한국어 우선, 없으면 영어)
-      let trailer = response.data.results.find(
+      let trailer = data.results.find(
         video => video.type === "Trailer" && video.site === "YouTube" && video.iso_639_1 === "ko"
       );
       
       if (!trailer) {
-        trailer = response.data.results.find(
+        trailer = data.results.find(
           video => video.type === "Trailer" && video.site === "YouTube"
         );
+      }
+      
+      if (!trailer) {
+        throw new Error('예고편을 찾을 수 없습니다.');
       }
       
       setTrailer(trailer);
@@ -53,9 +66,17 @@ const Banner = () => {
     } catch (error) {
       console.error("Error fetching trailer:", error);
       alert("예고편을 불러올 수 없습니다.");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
+
+  // 무한 슬라이드를 위한 데이터 확장
+  const extendedBannerData = filteredBannerData.length > 0 ? [
+    filteredBannerData[filteredBannerData.length - 1],
+    ...filteredBannerData,
+    filteredBannerData[0],
+  ] : [];
 
   useEffect(() => {
     if (isAnimating) {
@@ -83,17 +104,18 @@ const Banner = () => {
     }
   }, [currentIndex, isAnimating, filteredBannerData.length]);
 
+  // 자동 슬라이드
   useEffect(() => {
     if (filteredBannerData.length > 0) {
       const interval = setInterval(() => {
-        if (!isAnimating) {
+        if (!isAnimating && !showModal) { // 모달이 열려있지 않을 때만 자동 슬라이드
           setIsAnimating(true);
           setCurrentIndex(prev => prev + 1);
         }
       }, 5000);
       return () => clearInterval(interval);
     }
-  }, [filteredBannerData.length, isAnimating]);
+  }, [filteredBannerData.length, isAnimating, showModal]);
 
   const handleNext = () => {
     if (isAnimating || !filteredBannerData.length) return;
@@ -106,6 +128,18 @@ const Banner = () => {
     setIsAnimating(true);
     setCurrentIndex(prev => prev - 1);
   };
+
+  if (loading) {
+    return <div className="w-full h-[450px] bg-neutral-900 flex items-center justify-center">
+      <LoadingSpinner />
+    </div>;
+  }
+
+  if (error) {
+    return <div className="w-full h-[450px] bg-neutral-900 flex items-center justify-center text-white">
+      오류가 발생했습니다: {error}
+    </div>;
+  }
 
   if (!filteredBannerData.length) {
     return <div className="w-full h-[450px] bg-neutral-900 animate-pulse" />;
@@ -127,8 +161,8 @@ const Banner = () => {
               <div className="w-full h-full">
                 {data?.backdrop_path ? (
                   <img
-                    src={`https://image.tmdb.org/t/p/original${data.backdrop_path}`}
-                    alt={data?.title || data?.name || "Movie Banner"}
+                    src={createImageUrl(data.backdrop_path, 'original')}
+                    alt={data?.title || "Movie Banner"}
                     className="h-full w-full object-cover"
                     onError={(e) => {
                       e.target.onerror = null;
@@ -159,22 +193,25 @@ const Banner = () => {
 
               <div className="absolute top-0 w-full h-full bg-gradient-to-t from-neutral-900 to-transparent"></div>
 
-              <div className="container mx-auto">
-                <div className="container mx-auto absolute bottom-0 max-w-md px-4">
-                  <h2 className="font-bold text-2xl lg:text-4xl text-white drop-shadow-2xl">
+              <div className="container mx-auto px-4 absolute bottom-0 left-0 right-0">
+                <div className="max-w-2xl mb-8">
+                  <h2 className="font-bold text-2xl lg:text-4xl text-white drop-shadow-2xl mb-2">
                     {data?.title || data?.name || "Loading..."}
                   </h2>
-                  <p className="text-ellipsis line-clamp-4 my-2 text-white">
+                  <p className="text-ellipsis line-clamp-4 text-white text-sm lg:text-base">
                     {data?.overview || ""}
                   </p>
 
-                  <div className="flex items-center gap-4 text-white">
-                    <p>평점 : {Number(data?.vote_average || 0).toFixed(1)} ⭐</p>
+                  <div className="flex items-center gap-4 text-white mt-2">
+                    <p className="text-sm lg:text-base">
+                      평점: {Number(data?.vote_average || 0).toFixed(1)} ⭐
+                    </p>
                   </div>
+                  
                   <button 
                     onClick={() => fetchTrailer(data?.id)}
                     disabled={loading}
-                    className={`bg-red-700 px-6 py-3 text-white font-bold rounded mt-4 
+                    className={`bg-red-700 px-4 py-2 text-white font-bold rounded mt-4 
                       hover:bg-red-800 transition-all hover:scale-105 flex items-center gap-2
                       ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
                   >

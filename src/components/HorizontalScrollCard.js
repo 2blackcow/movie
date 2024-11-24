@@ -1,8 +1,9 @@
 import React, { useRef, useEffect } from "react";
 import Card from "./Card";
 import { GoTriangleLeft, GoTriangleRight } from "react-icons/go";
+import LoadingSpinner from "./LoadingSpinner"; // LoadingSpinner 컴포넌트 추가 필요
 
-const HorizontalScrollCard = ({ data = [], heading }) => {
+const HorizontalScrollCard = ({ data = [], heading, loading = false }) => {
   const containerRef = useRef();
 
   useEffect(() => {
@@ -14,22 +15,18 @@ const HorizontalScrollCard = ({ data = [], heading }) => {
       const containerScrollWidth = container.scrollWidth;
       const containerWidth = container.clientWidth;
       
-      // 스크롤이 끝에 도달했는지 확인
       const isScrollEnd = 
         (containerScrollPosition === 0 && event.deltaY < 0) || 
         (containerScrollPosition + containerWidth >= containerScrollWidth && event.deltaY > 0);
       
-      // 스크롤이 끝에 도달하지 않았다면 세로 스크롤을 방지
       if (!isScrollEnd) {
         event.preventDefault();
         container.scrollLeft += event.deltaY;
       }
     };
 
-    // passive: false로 이벤트 리스너 추가
     container.addEventListener('wheel', handleWheel, { passive: false });
 
-    // 컴포넌트 언마운트 시 이벤트 리스너 제거
     return () => {
       container.removeEventListener('wheel', handleWheel);
     };
@@ -45,7 +42,18 @@ const HorizontalScrollCard = ({ data = [], heading }) => {
     });
   };
 
-  // 데이터가 없거나 로딩 중일 때 처리
+  if (loading) {
+    return (
+      <div className="my-8">
+        <h2 className="text-2xl font-bold mb-4 text-white">{heading}</h2>
+        <div className="flex justify-center items-center h-[300px]">
+          <LoadingSpinner />
+        </div>
+      </div>
+    );
+  }
+
+  // 데이터가 없을 때 처리
   if (!data || data.length === 0) {
     return null;
   }
@@ -55,7 +63,6 @@ const HorizontalScrollCard = ({ data = [], heading }) => {
       <h2 className="text-2xl font-bold mb-4 text-white">{heading}</h2>
       
       <div className="relative group">
-        {/* 스크롤 가능한 컨테이너 */}
         <div
           ref={containerRef}
           className="flex overflow-x-auto gap-4 pb-4 scrollbar-none"
@@ -75,19 +82,22 @@ const HorizontalScrollCard = ({ data = [], heading }) => {
           ))}
         </div>
 
-        {/* 스크롤 버튼 */}
-        <button
-          onClick={() => scroll('left')}
-          className="absolute left-0 top-1/2 -translate-y-1/2 bg-black/50 p-2 rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity"
-        >
-          <GoTriangleLeft size={20} />
-        </button>
-        <button
-          onClick={() => scroll('right')}
-          className="absolute right-0 top-1/2 -translate-y-1/2 bg-black/50 p-2 rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity"
-        >
-          <GoTriangleRight size={20} />
-        </button>
+        {data.length > 0 && (
+          <>
+            <button
+              onClick={() => scroll('left')}
+              className="absolute left-0 top-1/2 -translate-y-1/2 bg-black/50 p-2 rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity"
+            >
+              <GoTriangleLeft size={20} />
+            </button>
+            <button
+              onClick={() => scroll('right')}
+              className="absolute right-0 top-1/2 -translate-y-1/2 bg-black/50 p-2 rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity"
+            >
+              <GoTriangleRight size={20} />
+            </button>
+          </>
+        )}
       </div>
     </div>
   );
