@@ -1,15 +1,21 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { MdFavorite, MdFavoriteBorder, MdInfo } from 'react-icons/md';
 import { toggleMyList } from '../store/movieSlice';
+import { createImageUrl } from '../constants/api.config';
+import { favoriteMovies } from '../utils/localStorage'; 
 
 const Card = ({ data }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [imageError, setImageError] = useState(false);
-  const myList = useSelector((state) => state.movieData.myList);
-  const isInMyList = myList.some(movie => movie.id === data.id);
+  const [isInMyList, setIsInMyList] = useState(false);
+
+  useEffect(() => {
+    // 초기에 localStorage에 저장된 찜한 영화 정보 확인하여 isInMyList 상태 설정
+    setIsInMyList(favoriteMovies.isFavorite(data.id));
+  }, [data.id]);
 
   const formatRating = (rating) => {
     if (!rating || rating === 0 || isNaN(rating)) {
@@ -18,24 +24,34 @@ const Card = ({ data }) => {
     return `★ ${rating.toFixed(1)}`;
   };
 
+  // 찜하기 기능 로직 수정
   const handleToggleMyList = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    dispatch(toggleMyList(data));
+
+    if (isInMyList) {
+      favoriteMovies.remove(data.id); // localStorage에서 제거
+    } else {
+      favoriteMovies.add(data); // localStorage에 추가
+    }
+
+    setIsInMyList(!isInMyList); // 상태 업데이트
+    dispatch(toggleMyList(data)); // Redux 상태 업데이트
   };
 
   const handleCardClick = () => {
     navigate(`/movie/${data.id}`);
   };
 
+  const imageUrl = !imageError && data.poster_path 
+    ? createImageUrl(data.poster_path, 'w500')
+    : '/placeholder-image.jpg';
+
   return (
     <div className="relative group cursor-pointer" onClick={handleCardClick}>
       <div className="overflow-hidden rounded-lg aspect-[2/3] relative">
         <img
-          src={!imageError && data.poster_path 
-            ? `https://image.tmdb.org/t/p/w500${data.poster_path}`
-            : '/placeholder-image.jpg'
-          }
+          src={imageUrl}
           alt={data.title}
           className="w-full h-full object-cover transform transition-transform duration-300 group-hover:scale-110"
           onError={(e) => {
