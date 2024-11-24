@@ -3,7 +3,7 @@ import './App.css';
 import Header from './components/Header';
 import MobileNavigation from './components/MobileNavigation';
 import { useEffect } from 'react';
-import { setBannerDtata, setImageURL } from './store/movieSlice';
+import { setBannerData, setImageURL } from './store/movieSlice';
 import { useDispatch } from 'react-redux';
 import useFetch from './hooks/useFetch';
 import { ENDPOINTS } from './constants/api.config';
@@ -15,7 +15,7 @@ function App() {
 
   useEffect(() => {
     if (trendingData.length > 0) {
-      dispatch(setBannerDtata(trendingData));
+      dispatch(setBannerData(trendingData));
     }
   }, [trendingData, dispatch]);
 

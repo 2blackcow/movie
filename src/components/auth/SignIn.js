@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { MdVisibility, MdVisibilityOff } from "react-icons/md";
+import { userStorage, STORAGE_KEYS } from '../../utils/localStorage';
 
 const SignIn = () => {
   const navigate = useNavigate();
@@ -10,17 +11,17 @@ const SignIn = () => {
     rememberMe: false,
   });
   const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false); // 비밀번호 보기 상태
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     // 자동 로그인 체크
-    const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
+    const isLoggedIn = localStorage.getItem(STORAGE_KEYS.IS_LOGGED_IN) === "true";
     if (isLoggedIn) {
       navigate("/");
     }
 
     // 저장된 이메일 불러오기
-    const savedEmail = localStorage.getItem("rememberedEmail");
+    const savedEmail = localStorage.getItem(STORAGE_KEYS.REMEMBERED_EMAIL);
     if (savedEmail) {
       setFormData((prev) => ({
         ...prev,
@@ -58,7 +59,7 @@ const SignIn = () => {
       }
 
       // 로그인 로직
-      const users = JSON.parse(localStorage.getItem("users") || "[]");
+      const users = JSON.parse(localStorage.getItem(STORAGE_KEYS.USERS) || "[]");
       const user = users.find(
         (u) => u.id === formData.email && u.password === formData.password
       );
@@ -67,19 +68,21 @@ const SignIn = () => {
         throw new Error("이메일 또는 비밀번호가 일치하지 않습니다.");
       }
 
+      // 사용자 초기화
+      userStorage.initUser(formData.email);
+      
+      // API 키 저장
+      localStorage.setItem(STORAGE_KEYS.TMDB_KEY, user.password);
+      
+      // 로그인 상태 저장
+      localStorage.setItem(STORAGE_KEYS.IS_LOGGED_IN, "true");
+
       // Remember Me 처리
       if (formData.rememberMe) {
-        localStorage.setItem("rememberedEmail", formData.email);
+        localStorage.setItem(STORAGE_KEYS.REMEMBERED_EMAIL, formData.email);
       } else {
-        localStorage.removeItem("rememberedEmail");
+        localStorage.removeItem(STORAGE_KEYS.REMEMBERED_EMAIL);
       }
-
-      // 로그인 상태 저장
-      localStorage.setItem("isLoggedIn", "true");
-      localStorage.setItem("currentUser", formData.email);
-
-      // TMDB API 키 저장
-      localStorage.setItem("TMDB-Key", user.password);
 
       alert("로그인 성공!");
 
@@ -126,16 +129,16 @@ const SignIn = () => {
               <input
                 id="password"
                 name="password"
-                type={showPassword ? "text" : "password"} // 상태에 따라 타입 변경
+                type={showPassword ? "text" : "password"}
                 required
                 value={formData.password}
                 onChange={handleChange}
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm pr-10"
                 placeholder="비밀번호"
               />
               <button
                 type="button"
-                onClick={togglePasswordVisibility} // 상태 토글
+                onClick={togglePasswordVisibility}
                 className="absolute inset-y-0 right-0 px-3 flex items-center"
                 aria-label="비밀번호 보기 토글"
               >
@@ -168,7 +171,7 @@ const SignIn = () => {
 
             <Link
               to="/signup"
-              className="text-sm font-medium text-indigo-600 hover:text-indigo-500"
+              className="text-sm font-medium text-indigo-600 hover:text-indigo-500 transition-colors duration-200"
             >
               회원가입
             </Link>
@@ -180,7 +183,7 @@ const SignIn = () => {
               disabled={loading}
               className={`group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white ${
                 loading ? "bg-indigo-400" : "bg-indigo-600 hover:bg-indigo-700"
-              } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500`}
+              } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200`}
             >
               {loading ? "로그인 중..." : "로그인"}
             </button>
