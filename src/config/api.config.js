@@ -6,7 +6,7 @@ export const API_CONFIG = {
   };
   
   export const ENDPOINTS = {
-    TRENDING: '/trending/all/week',  // 대세 콘텐츠
+    TRENDING: '/trending/movie/week',  // 대세 콘텐츠
     NOW_PLAYING: '/movie/now_playing', // 현재 상영작
     TOP_RATED: '/movie/top_rated',   // 최고 평점
   };

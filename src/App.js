@@ -2,7 +2,6 @@ import { Outlet } from 'react-router-dom';
 import './App.css';
 import Header from './components/Header';
 import MobileNavigation from './components/MobileNavigation';
-import Browse from './pages/Browse';
 import { useEffect } from 'react';
 import { setBannerDtata, setImageURL } from './store/movieSlice';
 import { useDispatch } from 'react-redux';

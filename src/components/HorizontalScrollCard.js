@@ -1,16 +1,39 @@
-import React, { useRef } from "react";
+import React, { useRef, useEffect } from "react";
 import Card from "./Card";
 import { GoTriangleLeft, GoTriangleRight } from "react-icons/go";
 
 const HorizontalScrollCard = ({ data = [], heading }) => {
   const containerRef = useRef();
 
-  const handleWheel = (event) => {
-    if (!containerRef.current || !event) return;
-    
-    event.preventDefault();
-    containerRef.current.scrollLeft += event.deltaY;
-  };
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const handleWheel = (event) => {
+      const containerScrollPosition = container.scrollLeft;
+      const containerScrollWidth = container.scrollWidth;
+      const containerWidth = container.clientWidth;
+      
+      // 스크롤이 끝에 도달했는지 확인
+      const isScrollEnd = 
+        (containerScrollPosition === 0 && event.deltaY < 0) || 
+        (containerScrollPosition + containerWidth >= containerScrollWidth && event.deltaY > 0);
+      
+      // 스크롤이 끝에 도달하지 않았다면 세로 스크롤을 방지
+      if (!isScrollEnd) {
+        event.preventDefault();
+        container.scrollLeft += event.deltaY;
+      }
+    };
+
+    // passive: false로 이벤트 리스너 추가
+    container.addEventListener('wheel', handleWheel, { passive: false });
+
+    // 컴포넌트 언마운트 시 이벤트 리스너 제거
+    return () => {
+      container.removeEventListener('wheel', handleWheel);
+    };
+  }, []);
 
   const scroll = (direction) => {
     if (!containerRef.current) return;
@@ -36,7 +59,6 @@ const HorizontalScrollCard = ({ data = [], heading }) => {
         <div
           ref={containerRef}
           className="flex overflow-x-auto gap-4 pb-4 scrollbar-none"
-          onWheel={handleWheel}
           style={{
             scrollbarWidth: 'none',
             msOverflowStyle: 'none',

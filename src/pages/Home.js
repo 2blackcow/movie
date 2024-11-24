@@ -1,12 +1,12 @@
 import React from "react";
 import Banner from "../components/Banner";
-import { useSelector } from "react-redux";
 import HorizontalScrollCard from "../components/HorizontalScrollCard";
 import useFetch from "../hooks/useFetch";
 import { MOVIE_CATEGORIES, ENDPOINTS } from "../config/api.config";
 
 const Home = () => {
-  const trendingData = useSelector((state) => state.movieData.bannerData) || [];
+  // trending 데이터를 Redux에서 가져오는 대신 API로 직접 호출
+  const { data: trendingData, loading: trendingLoading } = useFetch(ENDPOINTS.TRENDING);
   const { data: nowPlayingData, loading: nowPlayingLoading } = useFetch(ENDPOINTS.NOW_PLAYING);
   const { data: topRatedData, loading: topRatedLoading } = useFetch(ENDPOINTS.TOP_RATED);
 
@@ -15,10 +15,12 @@ const Home = () => {
       <Banner />
       <div className="container mx-auto px-4 space-y-8">
         {/* 대세 콘텐츠 섹션 */}
-        <HorizontalScrollCard 
-          data={trendingData} 
-          heading={MOVIE_CATEGORIES.trending.title}
-        />
+        {!trendingLoading && (
+          <HorizontalScrollCard 
+            data={trendingData} 
+            heading={MOVIE_CATEGORIES.trending.title}
+          />
+        )}
         
         {/* 현재 상영작 섹션 */}
         {!nowPlayingLoading && (
