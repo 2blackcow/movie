@@ -9,7 +9,7 @@ const MyList = () => {
     return (
       <div className="min-h-screen pt-20 px-4">
         <div className="container mx-auto">
-          <h1 className="text-3xl font-bold mb-8">내가 찜한 콘텐츠</h1>
+          <h1 className="text-3xl font-bold mb-8">내가 찜한 콘텐츠♥️</h1>
           <div className="flex flex-col items-center justify-center gap-4 py-20">
             <p className="text-xl text-gray-400">찜한 콘텐츠가 없습니다</p>
             <p className="text-gray-500">
@@ -25,7 +25,7 @@ const MyList = () => {
     <div className="min-h-screen pt-20 px-4">
       <div className="container mx-auto">
         <div className="flex items-center justify-between mb-8">
-          <h1 className="text-3xl font-bold">내가 찜한 콘텐츠</h1>
+          <h1 className="text-3xl font-bold">내가 찜한 콘텐츠♥️ </h1>
           <span className="text-gray-400">
             총 {myList.length}개의 콘텐츠
           </span>

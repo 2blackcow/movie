@@ -7,25 +7,41 @@ import Browse from "../pages/Browse";
 import Popular from "../pages/Popular";
 import MovieDetail from "../pages/MovieDetail";
 
-const router = createHashRouter(
-  [
-    {
-      path: "/",
-      element: <App />,
-      children: [
-        { path: "", element: <Home /> },
-        { path: "movie", element: <Home /> },
-        { path: "popular", element: <Popular /> },
-        { path: "wishlist", element: <MyList /> },
-        { path: "browse", element: <Browse /> },
-        { path: "movie/:id", element: <MovieDetail /> },
-        { path: "search", element: <SearchPage /> },
-      ],
-    },
-  ],
+const router = createHashRouter([
   {
-    basename: "/movie" 
+    path: "/",
+    element: <App />,
+    children: [
+      {
+        index: true,
+        element: <Home />,
+      },
+      {
+        path: "movie",
+        element: <Home />,
+      },
+      {
+        path: "popular",
+        element: <Popular />,
+      },
+      {
+        path: "wishlist",
+        element: <MyList />,
+      },
+      {
+        path: "browse",
+        element: <Browse />,
+      },
+      {
+        path: "movie/:id",
+        element: <MovieDetail />,
+      },
+      {
+        path: "search",
+        element: <SearchPage />,
+      }
+    ],
   }
-);
+]);
 
 export default router;

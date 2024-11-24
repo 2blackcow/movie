@@ -12,7 +12,7 @@ const Header = () => {
 
   useEffect(() => {
     if (searchInput) {
-      navigate(`/search?q=${searchInput}`);
+      navigate(`/search?q=${searchInput}`);  // HashRouter에서는 자동으로 처리됨
     }
   }, [searchInput, navigate]);
 
@@ -24,7 +24,7 @@ const Header = () => {
     <>
       <header className="fixed top-0 w-full h-16 bg-neutral-600 bg-opacity-75 flex items-center justify-between px-5 sm:px-10 z-50">
         {/* Logo Section */}
-        <Link className="flex items-center mr-6">
+        <Link to="/" className="flex items-center mr-6">
           <img src={logo} alt="logo" className="w-12 sm:w-16 md:w-20" />
         </Link>
 
@@ -33,12 +33,13 @@ const Header = () => {
           {navigation.map((nav) => (
             <NavLink
               key={nav.label}
-              to={nav.href}
+              to={nav.href.replace("/", "")}  // 앞의 슬래시 제거
               className={({ isActive }) =>
                 `text-white hover:text-red-800 font-bold ${
                   isActive ? "text-red-800 font-bold" : ""
                 }`
               }
+              end  // 정확한 경로 매칭을 위해 추가
             >
               {nav.label}
             </NavLink>
@@ -84,13 +85,14 @@ const Header = () => {
             {navigation.map((nav) => (
               <NavLink
                 key={nav.label}
-                to={nav.href}
+                to={nav.href.replace("/", "")}  // 앞의 슬래시 제거
                 onClick={() => setIsMenuOpen(false)}
                 className={({ isActive }) =>
                   `flex items-center gap-2 text-white hover:text-red-800 font-bold ${
                     isActive ? "text-red-800 font-bold" : ""
                   }`
                 }
+                end  // 정확한 경로 매칭을 위해 추가
               >
                 {nav.icon}
                 <span>{nav.label}</span>
