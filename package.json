@@ -46,11 +46,13 @@
     "react-app-polyfill": "^3.0.0",
     "react-dev-utils": "^12.0.1",
     "react-dom": "^18.3.1",
+    "react-hot-toast": "^2.4.1",
     "react-icons": "^5.3.0",
     "react-redux": "^9.1.2",
     "react-refresh": "^0.11.0",
     "react-router-dom": "^6.28.0",
     "react-scripts": "^5.0.1",
+    "react-toastify": "^10.0.6",
     "resolve": "^1.20.0",
     "resolve-url-loader": "^4.0.0",
     "sass-loader": "^12.3.0",
@@ -96,7 +98,6 @@
     "gh-pages": "^6.2.0",
     "tailwindcss": "^3.4.15"
   },
-  
   "jest": {
     "roots": [
       "<rootDir>/src"

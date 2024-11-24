@@ -6,39 +6,50 @@ import MyList from "../pages/MyList";
 import Browse from "../pages/Browse";
 import Popular from "../pages/Popular";
 import MovieDetail from "../pages/MovieDetail";
+import SignIn from "../components/auth/SignIn";
+import SignUp from "../components/auth/SignUp";
+import AuthGuard from "../components/auth/AuthGuard";
 
 const router = createHashRouter([
+  {
+    path: "/signin",
+    element: <SignIn />,
+  },
+  {
+    path: "/signup",
+    element: <SignUp />,
+  },
   {
     path: "/",
     element: <App />,
     children: [
       {
         index: true,
-        element: <Home />,
+        element: <AuthGuard><Home /></AuthGuard>,
       },
       {
         path: "movie",
-        element: <Home />,
+        element: <AuthGuard><Home /></AuthGuard>,
       },
       {
         path: "popular",
-        element: <Popular />,
+        element: <AuthGuard><Popular /></AuthGuard>,
       },
       {
         path: "wishlist",
-        element: <MyList />,
+        element: <AuthGuard><MyList /></AuthGuard>,
       },
       {
         path: "browse",
-        element: <Browse />,
+        element: <AuthGuard><Browse /></AuthGuard>,
       },
       {
         path: "movie/:id",
-        element: <MovieDetail />,
+        element: <AuthGuard><MovieDetail /></AuthGuard>,
       },
       {
         path: "search",
-        element: <SearchPage />,
+        element: <AuthGuard><SearchPage /></AuthGuard>,
       }
     ],
   }
