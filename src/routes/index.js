@@ -22,8 +22,7 @@ const router = createBrowserRouter(
         { path: "search", element: <SearchPage /> },
       ],
     },
-  ],
-  { basename: "/movie/" }
+  ]
 );
 
 export default router;
