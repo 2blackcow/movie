@@ -37,6 +37,7 @@ jobs:
           branch: gh-pages
           folder: build # Create React App은 build 폴더 사용
           clean: true
+          token: ${{ secrets.MY_GITHUB_TOKEN }}
 
       - name: Deploy to GitHub Pages (Staging)
         if: github.ref == 'refs/heads/develop'
@@ -45,3 +46,4 @@ jobs:
           branch: gh-pages
           folder: build # Create React App은 build 폴더 사용
           clean: true
+          token: ${{ secrets.MY_GITHUB_TOKEN }}
