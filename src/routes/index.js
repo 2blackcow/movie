@@ -1,4 +1,4 @@
-import { createBrowserRouter } from "react-router-dom";
+import { createHashRouter } from "react-router-dom";
 import App from "../App";
 import Home from "../pages/Home";
 import SearchPage from "../pages/SearchPage";
@@ -7,7 +7,7 @@ import Browse from "../pages/Browse";
 import Popular from "../pages/Popular";
 import MovieDetail from "../pages/MovieDetail";
 
-const router = createBrowserRouter(
+const router = createHashRouter(
   [
     {
       path: "/",
@@ -22,7 +22,10 @@ const router = createBrowserRouter(
         { path: "search", element: <SearchPage /> },
       ],
     },
-  ]
+  ],
+  {
+    basename: "/movie" 
+  }
 );
 
 export default router;
