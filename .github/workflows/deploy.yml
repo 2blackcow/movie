@@ -1,5 +1,4 @@
 name: Deploy to GitHub Pages
-
 on: 
   push:
     branches:
@@ -9,46 +8,40 @@ on:
     branches:
       - main
       - develop
-
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-
     steps:
-      # Checkout the repository
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      # Set up Node.js (for build tasks)
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '14'
+          node-version: '18'
+          cache: 'npm'
 
-      # Install dependencies
       - name: Install dependencies
-        run: |
-          npm install
-
-      # Build the project (skip CI errors)
+        run: npm ci
+        
       - name: Build project
         run: |
           CI=false npm run build
+        env:
+          PUBLIC_URL: /movie # GitHub Pages의 base path 설정
 
-      # Deploy to GitHub Pages (main branch)
       - name: Deploy to GitHub Pages
-        if: github.ref == 'refs/heads/main'  # Only deploy on main branch
+        if: github.ref == 'refs/heads/main'
         uses: JamesIves/github-pages-deploy-action@v4
         with:
-          branch: gh-pages  # The branch where the built files will be deployed
-          folder: ./build   # The directory containing the build files (update as necessary)
-          token: ${{ secrets.MY_GITHUB_TOKEN }}
+          branch: gh-pages
+          folder: build # Create React App은 build 폴더 사용
+          clean: true
 
-      # Deploy to staging (develop branch)
       - name: Deploy to GitHub Pages (Staging)
-        if: github.ref == 'refs/heads/develop'  # Only deploy on develop branch
+        if: github.ref == 'refs/heads/develop'
         uses: JamesIves/github-pages-deploy-action@v4
         with:
-          branch: gh-pages  # The branch where the built files will be deployed
-          folder: ./build   # The directory containing the build files (update as necessary)
-          token: ${{ secrets.MY_GITHUB_TOKEN }}
+          branch: gh-pages
+          folder: build # Create React App은 build 폴더 사용
+          clean: true
