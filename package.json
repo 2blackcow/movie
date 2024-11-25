@@ -5,6 +5,9 @@
   "homepage": "https://2blackcow.github.io/movie/",
   "dependencies": {
     "@babel/core": "^7.16.0",
+    "@fortawesome/fontawesome-svg-core": "^6.7.1",
+    "@fortawesome/free-solid-svg-icons": "^6.7.1",
+    "@fortawesome/react-fontawesome": "^0.2.2",
     "@pmmmwh/react-refresh-webpack-plugin": "^0.5.3",
     "@reduxjs/toolkit": "^2.3.0",
     "@svgr/webpack": "^5.5.0",

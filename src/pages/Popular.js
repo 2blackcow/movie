@@ -1,118 +1,180 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import axios from 'axios';
+import React, { useState, useEffect, useRef } from 'react';
+import { MdGrid4X4, MdViewStream } from 'react-icons/md';
 import Card from '../components/Card';
+import LoadingSpinner from '../components/LoadingSpinner';
 import ScrollToTop from '../components/ScrollToTop';
-import { MdLocalFireDepartment } from 'react-icons/md';
 
 const Popular = () => {
+  const [viewMode, setViewMode] = useState('grid');
   const [movies, setMovies] = useState([]);
-  const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(0);
   const [hasMore, setHasMore] = useState(true);
+  const containerRef = useRef();
   const observer = useRef();
 
-  // 마지막 영화 요소 참조를 위한 콜백 함수
-  const lastMovieElementRef = useCallback(node => {
+  const lastMovieElementRef = React.useCallback(node => {
     if (loading) return;
     if (observer.current) observer.current.disconnect();
-
     observer.current = new IntersectionObserver(entries => {
       if (entries[0].isIntersecting && hasMore) {
         setPage(prevPage => prevPage + 1);
       }
-    }, { threshold: 1.0 });
-
+    });
     if (node) observer.current.observe(node);
   }, [loading, hasMore]);
 
-  // 영화 데이터 가져오기
-  const fetchMovies = async (pageNum) => {
+  const calculateGridSize = () => {
+    if (!containerRef.current) return { rows: 4, cols: 5 };
+    
+    const containerWidth = containerRef.current.offsetWidth;
+    const containerHeight = window.innerHeight - 240; 
+    
+    let columns;
+    if (containerWidth >= 1536) columns = 6;    
+    else if (containerWidth >= 1280) columns = 5;
+    else if (containerWidth >= 1024) columns = 4;
+    else if (containerWidth >= 768) columns = 3; 
+    else if (containerWidth >= 640) columns = 2;
+    else columns = 1;                            
+
+    const cardWidth = (containerWidth - (columns + 1) * 16) / columns;
+    const cardHeight = (cardWidth * 3) / 2;
+    
+    const rows = Math.floor(containerHeight / (cardHeight + 16)); 
+
+    return { rows, cols: columns };
+  };
+
+  const fetchMovies = async (pageNumber) => {
     try {
       setLoading(true);
-      const response = await axios.get('https://api.themoviedb.org/3/movie/popular', {
-        params: {
-          api_key: process.env.REACT_APP_API_KEY,
-          language: 'ko-KR',
-          page: pageNum,
-          region: 'KR',
-          'vote_count.gte': 20, // 최소 20개 이상의 평가가 있는 영화만
+      const apiKey = localStorage.getItem('TMDB-Key');
+      const response = await fetch(
+        `https://api.themoviedb.org/3/movie/popular?api_key=${apiKey}&language=ko-KR&page=${pageNumber}`
+      );
+      const data = await response.json();
+      
+      if (viewMode === 'grid') {
+        const { rows, cols } = calculateGridSize();
+        const moviesNeeded = rows * cols;
+        
+        if (moviesNeeded > 20) {
+          const nextPage = await fetch(
+            `https://api.themoviedb.org/3/movie/popular?api_key=${apiKey}&language=ko-KR&page=${pageNumber + 1}`
+          );
+          const nextData = await nextPage.json();
+          const allMovies = [...data.results, ...nextData.results];
+          setMovies(allMovies.slice(0, moviesNeeded));
+        } else {
+          setMovies(data.results.slice(0, moviesNeeded));
         }
-      });
-
-      const newMovies = response.data.results.filter(movie => movie.poster_path);
+      } else {
+        setMovies(data.results);
+      }
       
-      setMovies(prev => {
-        // 중복 제거를 위한 Set 사용
-        const uniqueMovies = new Set([...prev, ...newMovies].map(m => JSON.stringify(m)));
-        return Array.from(uniqueMovies).map(m => JSON.parse(m));
-      });
-      
-      setHasMore(newMovies.length > 0 && pageNum < response.data.total_pages);
+      setTotalPages(Math.min(data.total_pages, 500));
       setLoading(false);
     } catch (error) {
-      console.error('Error fetching popular movies:', error);
+      console.error('Error fetching movies:', error);
       setLoading(false);
     }
   };
 
-  // 초기 데이터 로드 및 페이지 변경 시 데이터 로드
   useEffect(() => {
-    fetchMovies(page);
-  }, [page]);
+    setPage(1);
+    fetchMovies(1);
+  }, [viewMode]);
+
+  useEffect(() => {
+    if (viewMode === 'grid') {
+      fetchMovies(page);
+    }
+  }, [page, viewMode]);
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (viewMode === 'grid') {
+        fetchMovies(page);
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [viewMode, page]);
 
   return (
-    <div className="min-h-screen pt-20 px-4">
-      <div className="container mx-auto">
-        {/* 헤더 */}
-        <div className="flex items-center gap-2 mb-8">
-          <MdLocalFireDepartment className="text-red-500" size={30} />
-          <h1 className="text-2xl font-bold">대세 콘텐츠</h1>
+    <div className="min-h-screen bg-neutral-900 pt-20">
+      <div className="container mx-auto px-4" ref={containerRef}>
+        <div className="flex flex-col sm:flex-row justify-between items-center mb-6">
+          <h1 className="text-2xl font-bold text-white mb-4 sm:mb-0">대세 콘텐츠</h1>
+          <div className="flex gap-4">
+            <button
+              onClick={() => setViewMode('grid')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-full
+                ${viewMode === 'grid' ? 'bg-red-600 text-white' : 'bg-gray-700 hover:bg-gray-600'}`}
+            >
+              <MdGrid4X4 size={20} />
+              Table View
+            </button>
+            <button
+              onClick={() => setViewMode('infinite')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-full
+                ${viewMode === 'infinite' ? 'bg-red-600 text-white' : 'bg-gray-700 hover:bg-gray-600'}`}
+            >
+              <MdViewStream size={20} />
+              Infinite Scroll
+            </button>
+          </div>
         </div>
 
-        {/* 영화 그리드 */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 min-h-[200px]">
-          {movies.map((movie, index) => {
-            if (movies.length === index + 1) {
-              // 마지막 요소에 ref 추가
-              return (
-                <div key={movie.id} ref={lastMovieElementRef}>
+        {viewMode === 'grid' ? (
+          <div className="flex flex-col">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4 auto-rows-fr">
+              {movies.map((movie) => (
+                <div key={movie.id} className="aspect-[2/3]">
                   <Card data={movie} />
                 </div>
-              );
-            } else {
-              return (
-                <div key={movie.id}>
-                  <Card data={movie} />
-                </div>
-              );
-            }
-          })}
-        </div>
-
-        {/* 로딩 인디케이터 */}
-        {loading && (
-          <div className="flex justify-center items-center py-8">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-500"></div>
+              ))}
+            </div>
+            
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-8 mb-4">
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setPage(prevPage => Math.max(prevPage - 1, 1))}
+                  disabled={page === 1}
+                  className={`px-6 py-2 rounded-lg transition-colors
+                    ${page === 1 ? 'bg-gray-700 text-gray-500' : 'bg-red-600 hover:bg-red-700'}`}
+                >
+                  ＜ 이전
+                </button>
+                
+                <span className="text-white">
+                  {page} / {totalPages} 페이지  
+                </span>
+                
+                <button
+                  onClick={() => setPage(prevPage => Math.min(prevPage + 1, totalPages))} 
+                  disabled={page === totalPages}
+                  className={`px-6 py-2 rounded-lg transition-colors
+                    ${page === totalPages ? 'bg-gray-700 text-gray-500' : 'bg-red-600 hover:bg-red-700'}`}
+                >
+                  다음 ＞
+                </button>
+              </div>
+            </div>
           </div>
-        )}
-
-        {/* 더 이상 데이터가 없을 때 메시지 */}
-        {!hasMore && movies.length > 0 && (
-          <div className="text-center py-8 text-gray-400">
-            모든 콘텐츠를 불러왔습니다.
-          </div>
-        )}
-
-        {/* 데이터가 없을 때 메시지 */}
-        {!loading && movies.length === 0 && (
-          <div className="text-center py-8 text-gray-400">
-            표시할 콘텐츠가 없습니다.
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+            {movies.map((movie) => (
+              <div key={movie.id}>
+                <Card data={movie} />
+              </div>
+            ))}
           </div>
         )}
       </div>
-
-      {/* 스크롤 탑 버튼 */}
-      <ScrollToTop />
     </div>
   );
 };
