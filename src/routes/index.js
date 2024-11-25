@@ -9,15 +9,16 @@ import MovieDetail from "../pages/MovieDetail";
 import SignIn from "../components/auth/SignIn";
 import SignUp from "../components/auth/SignUp";
 import AuthGuard from "../components/auth/AuthGuard";
+import AuthForm from "../components/auth/AuthForm";
 
 const router = createHashRouter([
   {
     path: "/signin",
-    element: <SignIn />,
+    element: <AuthForm />,
   },
   {
     path: "/signup",
-    element: <SignUp />,
+    element: <AuthForm />,
   },
   {
     path: "/",
