@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import ScrollToTop from "../components/ScrollToTop";
+import LoadingSpinner from "../components/LoadingSpinner";
 import {
   MdFilterList,
   MdRefresh,
@@ -300,14 +301,8 @@ const Browse = () => {
         {/* 그리드 뷰로 변경된 영화 목록 */}
         <div className="mb-8">
           {loading ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-              {[...Array(20)].map((_, index) => (
-                <div key={index} className="animate-pulse">
-                  <div className="bg-gray-700 rounded-lg aspect-[2/3]"></div>
-                  <div className="mt-2 h-4 bg-gray-700 rounded w-3/4"></div>
-                  <div className="mt-2 h-4 bg-gray-700 rounded w-1/2"></div>
-                </div>
-              ))}
+            <div className="w-full h-[450px]">
+              <LoadingSpinner />
             </div>
           ) : movies.length === 0 ? (
             <div className="text-center py-12">
