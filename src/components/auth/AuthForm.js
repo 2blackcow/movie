@@ -1,10 +1,14 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MdVisibility, MdVisibilityOff } from 'react-icons/md';
+import { useDispatch } from 'react-redux';
+import { MdVisibility, MdVisibilityOff, MdArrowBack } from 'react-icons/md';
 import { userStorage, STORAGE_KEYS } from '../../utils/localStorage';
+import { loadUserList } from '../../store/movieSlice';
+import { showToast } from '../../components/common/Toast';
 
 const AuthForm = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const [isSignIn, setIsSignIn] = useState(true);
   const [formData, setFormData] = useState({
     email: "",
@@ -17,7 +21,6 @@ const AuthForm = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
 
-  // 기존의 validation 및 handler 함수들...
   const validateEmail = (email) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
@@ -54,6 +57,14 @@ const AuthForm = () => {
     });
   };
 
+  const handleBack = () => {
+    if (!isSignIn) {
+      setIsSignIn(true);
+    } else {
+      navigate(-1);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -82,6 +93,7 @@ const AuthForm = () => {
         if (formData.rememberMe) {
           localStorage.setItem(STORAGE_KEYS.REMEMBERED_EMAIL, formData.email);
         }
+        dispatch(loadUserList());
 
         alert('로그인 성공!');
         navigate("/");
@@ -126,6 +138,17 @@ const AuthForm = () => {
       <div className="absolute inset-0 backdrop-blur-3xl" />
       
       <div className="w-full max-w-[95%] sm:max-w-md relative">
+        {/* 뒤로가기 버튼 추가 */}
+        {!isSignIn && (
+          <button
+            onClick={handleBack}
+            className="absolute -top-12 left-0 text-white hover:text-purple-400 transition-colors duration-200 flex items-center gap-2"
+          >
+            <MdArrowBack size={24} />
+            <span>로그인으로 돌아가기</span>
+          </button>
+        )}
+
         <div 
           className={`
             bg-neutral-800/80 backdrop-blur-md p-4 sm:p-6 md:p-8 rounded-2xl 
