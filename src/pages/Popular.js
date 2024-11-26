@@ -11,43 +11,65 @@ const Popular = () => {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
   const [hasMore, setHasMore] = useState(true);
+  const [gridDimensions, setGridDimensions] = useState({ rows: 3, cols: 5 });
   const containerRef = useRef();
-  const observer = useRef();
-
-  const lastMovieElementRef = React.useCallback(node => {
-    if (loading) return;
-    if (observer.current) observer.current.disconnect();
-    observer.current = new IntersectionObserver(entries => {
-      if (entries[0].isIntersecting && hasMore) {
-        setPage(prevPage => prevPage + 1);
-      }
-    });
-    if (node) observer.current.observe(node);
-  }, [loading, hasMore]);
 
   const calculateGridSize = () => {
-    if (!containerRef.current) return { rows: 4, cols: 5 };
+    if (!containerRef.current) return { rows: 3, cols: 5 };
     
     const containerWidth = containerRef.current.offsetWidth;
-    const containerHeight = window.innerHeight - 240; 
+    const availableHeight = window.innerHeight - 300;
     
     let columns;
-    if (containerWidth >= 1536) columns = 6;    
-    else if (containerWidth >= 1280) columns = 5;
-    else if (containerWidth >= 1024) columns = 4;
-    else if (containerWidth >= 768) columns = 3; 
-    else if (containerWidth >= 640) columns = 2;
-    else columns = 1;                            
-
-    const cardWidth = (containerWidth - (columns + 1) * 16) / columns;
-    const cardHeight = (cardWidth * 3) / 2;
+    if (containerWidth >= 1536) columns = 8;
+    else if (containerWidth >= 1280) columns = 7;
+    else if (containerWidth >= 1024) columns = 6;
+    else if (containerWidth >= 768) columns = 5;
+    else if (containerWidth >= 640) columns = 4;
+    else columns = 3;
     
-    const rows = Math.floor(containerHeight / (cardHeight + 16)); 
-
+    const minGap = 16;
+    const availableWidth = containerWidth - (minGap * (columns + 1));
+    const cardWidth = Math.floor(availableWidth / columns);
+    const cardHeight = Math.floor(cardWidth * 1.5);
+    
+    const rows = Math.min(3, Math.floor((availableHeight - minGap) / (cardHeight + minGap)));
+    
     return { rows, cols: columns };
   };
 
-  const fetchMovies = async (pageNumber) => {
+  const fetchGridMovies = async (pageNumber) => {
+    try {
+      setLoading(true);
+      const apiKey = localStorage.getItem('TMDB-Key');
+      const { rows, cols } = gridDimensions;
+      const moviesNeeded = rows * cols;
+      
+      const firstPageResponse = await fetch(
+        `https://api.themoviedb.org/3/movie/popular?api_key=${apiKey}&language=ko-KR&page=${pageNumber}`
+      );
+      const firstPageData = await firstPageResponse.json();
+      
+      let moviesToDisplay = [...firstPageData.results];
+      
+      if (moviesNeeded > 20 && pageNumber < firstPageData.total_pages) {
+        const secondPageResponse = await fetch(
+          `https://api.themoviedb.org/3/movie/popular?api_key=${apiKey}&language=ko-KR&page=${pageNumber + 1}`
+        );
+        const secondPageData = await secondPageResponse.json();
+        moviesToDisplay = [...moviesToDisplay, ...secondPageData.results];
+      }
+      
+      setMovies(moviesToDisplay.slice(0, moviesNeeded));
+      setTotalPages(Math.min(Math.ceil(firstPageData.total_pages * 20 / moviesNeeded), 500));
+      setLoading(false);
+    } catch (error) {
+      console.error('Error fetching movies:', error);
+      setLoading(false);
+    }
+  };
+
+  const fetchInfiniteMovies = async (pageNumber, isFirstLoad = false) => {
     try {
       setLoading(true);
       const apiKey = localStorage.getItem('TMDB-Key');
@@ -56,25 +78,13 @@ const Popular = () => {
       );
       const data = await response.json();
       
-      if (viewMode === 'grid') {
-        const { rows, cols } = calculateGridSize();
-        const moviesNeeded = rows * cols;
-        
-        if (moviesNeeded > 20) {
-          const nextPage = await fetch(
-            `https://api.themoviedb.org/3/movie/popular?api_key=${apiKey}&language=ko-KR&page=${pageNumber + 1}`
-          );
-          const nextData = await nextPage.json();
-          const allMovies = [...data.results, ...nextData.results];
-          setMovies(allMovies.slice(0, moviesNeeded));
-        } else {
-          setMovies(data.results.slice(0, moviesNeeded));
-        }
-      } else {
+      if (isFirstLoad) {
         setMovies(data.results);
+      } else {
+        setMovies(prev => [...prev, ...data.results]);
       }
       
-      setTotalPages(Math.min(data.total_pages, 500));
+      setHasMore(pageNumber < Math.min(data.total_pages, 500));
       setLoading(false);
     } catch (error) {
       console.error('Error fetching movies:', error);
@@ -82,32 +92,64 @@ const Popular = () => {
     }
   };
 
+  const handleScroll = () => {
+    if (
+      viewMode === 'infinite' &&
+      window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 1000 &&
+      !loading &&
+      hasMore
+    ) {
+      setPage(prevPage => prevPage + 1);
+    }
+  };
+
   useEffect(() => {
-    setPage(1);
-    fetchMovies(1);
+    if (viewMode === 'grid') {
+      const dimensions = calculateGridSize();
+      setGridDimensions(dimensions);
+      setPage(1);
+      fetchGridMovies(1);
+    } else {
+      setPage(1);
+      fetchInfiniteMovies(1, true);
+    }
   }, [viewMode]);
 
   useEffect(() => {
     if (viewMode === 'grid') {
-      fetchMovies(page);
+      fetchGridMovies(page);
+    } else if (page > 1) {
+      fetchInfiniteMovies(page);
     }
-  }, [page, viewMode]);
+  }, [page, gridDimensions]);
+
+  useEffect(() => {
+    if (viewMode === 'infinite') {
+      window.addEventListener('scroll', handleScroll);
+      return () => window.removeEventListener('scroll', handleScroll);
+    }
+  }, [viewMode, loading, hasMore]);
 
   useEffect(() => {
     const handleResize = () => {
       if (viewMode === 'grid') {
-        fetchMovies(page);
+        const newDimensions = calculateGridSize();
+        setGridDimensions(newDimensions);
       }
     };
 
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, [viewMode, page]);
+  }, [viewMode]);
+
+  if (loading && movies.length === 0) {
+    return <LoadingSpinner fullScreen message="콘텐츠를 불러오는 중..." />;
+  }
 
   return (
-    <div className="min-h-screen bg-neutral-900 pt-20">
+    <div className="min-h-screen bg-neutral-900 pt-24">
       <div className="container mx-auto px-4" ref={containerRef}>
-        <div className="flex flex-col sm:flex-row justify-between items-center mb-6">
+        <div className="flex flex-col sm:flex-row justify-between items-center mb-4">
           <h1 className="text-2xl font-bold text-white mb-4 sm:mb-0">대세 콘텐츠</h1>
           <div className="flex gap-4">
             <button
@@ -131,34 +173,49 @@ const Popular = () => {
 
         {viewMode === 'grid' ? (
           <div className="flex flex-col">
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4 auto-rows-fr">
+            <div 
+              className="grid auto-rows-fr overflow-hidden"
+              style={{
+                gridTemplateColumns: `repeat(${gridDimensions.cols}, minmax(0, 1fr))`,
+                gap: '16px',
+                height: 'calc(100vh - 300px)',
+                padding: '8px',
+              }}
+            >
               {movies.map((movie) => (
-                <div key={movie.id} className="aspect-[2/3]">
+                <div 
+                  key={movie.id} 
+                  className="relative"
+                  style={{
+                    aspectRatio: '2/3',
+                    maxHeight: `calc((100vh - 300px - ${(gridDimensions.rows + 1) * 16}px) / ${gridDimensions.rows})`
+                  }}
+                >
                   <Card data={movie} />
                 </div>
               ))}
             </div>
             
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-8 mb-4">
-              <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-4 mb-4">
+              <div className="flex items-center gap-2">
                 <button
                   onClick={() => setPage(prevPage => Math.max(prevPage - 1, 1))}
-                  disabled={page === 1}
+                  disabled={page === 1 || loading}
                   className={`px-6 py-2 rounded-lg transition-colors
-                    ${page === 1 ? 'bg-gray-700 text-gray-500' : 'bg-red-600 hover:bg-red-700'}`}
+                    ${page === 1 || loading ? 'bg-gray-700 text-gray-500 cursor-not-allowed' : 'bg-red-600 hover:bg-red-700'}`}
                 >
                   ＜ 이전
                 </button>
                 
-                <span className="text-white">
-                  {page} / {totalPages} 페이지  
+                <span className="text-white px-4">
+                  {page} / {totalPages} 페이지
                 </span>
                 
                 <button
-                  onClick={() => setPage(prevPage => Math.min(prevPage + 1, totalPages))} 
-                  disabled={page === totalPages}
+                  onClick={() => setPage(prevPage => Math.min(prevPage + 1, totalPages))}
+                  disabled={page === totalPages || loading}
                   className={`px-6 py-2 rounded-lg transition-colors
-                    ${page === totalPages ? 'bg-gray-700 text-gray-500' : 'bg-red-600 hover:bg-red-700'}`}
+                    ${page === totalPages || loading ? 'bg-gray-700 text-gray-500 cursor-not-allowed' : 'bg-red-600 hover:bg-red-700'}`}
                 >
                   다음 ＞
                 </button>
@@ -168,13 +225,15 @@ const Popular = () => {
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
             {movies.map((movie) => (
-              <div key={movie.id}>
+              <div key={movie.id} className="aspect-[2/3]">
                 <Card data={movie} />
               </div>
             ))}
+            {loading && <LoadingSpinner fullScreen message="콘텐츠를 불러오는 중..." />}
           </div>
         )}
       </div>
+      <ScrollToTop />
     </div>
   );
 };
