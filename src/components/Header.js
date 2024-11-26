@@ -12,6 +12,8 @@ import { navigation } from "../constants/navigation";
 import { searchHistory, userStorage } from "../utils/localStorage";
 import SearchHistory from "./search/SearchHistory";
 import { clearMyList } from "../store/movieSlice";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import logo from "../assets/movie.png";
 
 const Header = () => {
@@ -60,6 +62,20 @@ const Header = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  const showToast = (message, type = "success", callback) => {
+    toast[type](message, {
+      position: "top-center",
+      autoClose: 1500,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+      progress: undefined,
+      theme: "colored",
+      onClose: callback
+    });
+  };
+
   const handleSearchFocus = () => {
     setShowSearchHistory(true);
   };
@@ -87,12 +103,30 @@ const Header = () => {
     userStorage.clearUserData();
     dispatch(clearMyList());
     setUserEmail("");
-    alert("로그아웃되었습니다.");
-    navigate("/signin");
+    setIsUserMenuOpen(false); // 유저 메뉴 닫기
+    setIsMenuOpen(false); // 모바일 메뉴 닫기
+
+    showToast(
+      '로그아웃되었습니다. 로그인 페이지로 이동합니다.', 
+      'success',
+      () => navigate("/signin") // 토스트가 닫힌 후에만 페이지 이동
+    );
   };
 
   return (
     <>
+      <ToastContainer
+        position="top-center"
+        autoClose={1500}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="colored"
+      />
       <header className="fixed top-0 w-full h-16 bg-neutral-600 bg-opacity-75 backdrop-blur-sm flex items-center justify-between px-5 sm:px-10 z-50">
         {/* Logo Section */}
         <Link to="/" className="flex items-center mr-6">
