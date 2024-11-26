@@ -4,7 +4,8 @@ import { useDispatch } from 'react-redux';
 import { MdVisibility, MdVisibilityOff, MdArrowBack } from 'react-icons/md';
 import { userStorage, STORAGE_KEYS } from '../../utils/localStorage';
 import { loadUserList } from '../../store/movieSlice';
-import { showToast } from '../../components/common/Toast';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const AuthForm = () => {
   const navigate = useNavigate();
@@ -19,7 +20,22 @@ const AuthForm = () => {
   });
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState('');
+  const [passwordMatch, setPasswordMatch] = useState(true);
+
+  const showToast = (message, type = 'error') => {
+    toast[type](message, {
+      position: "top-center",
+      autoClose: 3000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+      progress: undefined,
+      theme: "colored",
+    });
+  };
 
   const validateEmail = (email) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -39,15 +55,27 @@ const AuthForm = () => {
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
-      ...prev,
+    const newFormData = {
+      ...formData,
       [name]: type === 'checkbox' ? checked : value
-    }));
+    };
+    
+    // 비밀번호 일치 여부 실시간 체크
+    if (!isSignIn && (name === 'password' || name === 'confirmPassword')) {
+      if (name === 'password') {
+        setPasswordMatch(value === formData.confirmPassword);
+      } else {
+        setPasswordMatch(value === formData.password);
+      }
+    }
+    
+    setFormData(newFormData);
   };
 
   const toggleForm = () => {
     setIsSignIn(!isSignIn);
     setError('');
+    setPasswordMatch(true);
     setFormData({
       email: "",
       password: "",
@@ -95,12 +123,19 @@ const AuthForm = () => {
         }
         dispatch(loadUserList());
 
-        alert('로그인 성공!');
-        navigate("/");
+        showToast('로그인 성공! 메인 페이지로 이동합니다.', 'success');
+        
+        setTimeout(() => {
+          navigate("/");
+        }, 1000);
       } else {
         // 회원가입 로직
         if (!formData.agreeToTerms) {
           throw new Error('필수 약관에 동의해주세요.');
+        }
+
+        if (formData.password !== formData.confirmPassword) {
+          throw new Error('TMDB API Key가 일치하지 않습니다.');
         }
 
         const isValidApiKey = await validateTMDBApiKey(formData.password);
@@ -121,12 +156,15 @@ const AuthForm = () => {
         });
         localStorage.setItem('users', JSON.stringify(users));
 
-        alert('회원가입 성공!');
-        setIsSignIn(true);
+        showToast('회원가입 성공! 로그인 페이지로 이동합니다.', 'success');
+        
+        setTimeout(() => {
+          setIsSignIn(true);
+        }, 1000);
       }
     } catch (error) {
       setError(error.message);
-      alert(error.message);
+      showToast(error.message, 'error');
     } finally {
       setLoading(false);
     }
@@ -134,11 +172,23 @@ const AuthForm = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-neutral-900 px-4 py-8 sm:py-12 lg:py-16 relative overflow-hidden">
+      <ToastContainer
+        position="top-center"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="colored"
+      />
+      
       <div className="absolute inset-0 bg-gradient-to-br from-purple-800/20 to-red-600/20" />
       <div className="absolute inset-0 backdrop-blur-3xl" />
       
       <div className="w-full max-w-[95%] sm:max-w-md relative">
-        {/* 뒤로가기 버튼 추가 */}
         {!isSignIn && (
           <button
             onClick={handleBack}
@@ -228,6 +278,44 @@ const AuthForm = () => {
             </div>
 
             {!isSignIn && (
+              <div>
+                <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-300">
+                  TMDB API Key 확인
+                </label>
+                <div className="mt-1 relative">
+                  <input
+                    id="confirmPassword"
+                    name="confirmPassword"
+                    type={showConfirmPassword ? "text" : "password"}
+                    required
+                    value={formData.confirmPassword}
+                    onChange={handleChange}
+                    className="block w-full px-3 py-2 bg-neutral-700/50 border border-purple-500/30 
+                             rounded-md shadow-sm text-white placeholder-gray-400
+                             focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent
+                             transition-all duration-200 pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute inset-y-0 right-0 px-3 flex items-center text-gray-400 hover:text-purple-400"
+                  >
+                    {showConfirmPassword ? (
+                      <MdVisibilityOff className="h-5 w-5" />
+                    ) : (
+                      <MdVisibility className="h-5 w-5" />
+                    )}
+                  </button>
+                </div>
+                {!passwordMatch && formData.confirmPassword && (
+                  <p className="mt-1 text-sm text-red-500">
+                    TMDB API Key가 일치하지 않습니다
+                  </p>
+                )}
+              </div>
+            )}
+
+            {!isSignIn && (
               <div className="flex items-center">
                 <input
                   id="agreeToTerms"
@@ -262,10 +350,10 @@ const AuthForm = () => {
             <div>
               <button
                 type="submit"
-                disabled={loading}
+                disabled={loading || (!isSignIn && !passwordMatch)}
                 className={`
                   w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white
-                  ${loading ? 'bg-purple-500/50' : 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500'}
+                  ${loading || (!isSignIn && !passwordMatch) ? 'bg-purple-500/50 cursor-not-allowed' : 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500'}
                   focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500
                   transition-all duration-200
                 `}
