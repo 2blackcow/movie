@@ -53,8 +53,8 @@ npm install
 ```
 ### 환경 변수 설정
 ```
-.env 파일에 있는 REACT_APP_API_KEY를 
-개인의 TMDB API KEY로 설정
+src 폴더에 .env 파일을 추가하고 
+REACT_APP_API_KEY = [개인의 TMDB API KEY]로 작성
 ```
 ### 로컬 서버 실행
 ```
